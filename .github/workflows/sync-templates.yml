@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main ]
     paths:
-      - 'templates/product.json'     # Chỉ trigger khi file product.json thay đổi
+      - 'templates/product.json'
 
 jobs:
   sync-product-json:
@@ -13,15 +13,16 @@ jobs:
     strategy:
       matrix:
         child: 
-          - { branch: 'store-1', name: 'Brand Dev' }
-          - { branch: 'store-2', name: 'Brand Handle' }
-          # Thêm đầy đủ 10 store của bạn vào đây
+          - { branch: 'store-1', name: 'Store 1' }
+          - { branch: 'store-2', name: 'Store 2' }
+          # Thêm các branch khác nếu có
 
     steps:
       - name: Checkout main branch (source)
         uses: actions/checkout@v4
         with:
           ref: main
+          path: main-source
 
       - name: Checkout child branch
         uses: actions/checkout@v4
@@ -31,12 +32,18 @@ jobs:
       - name: Copy ONLY product.json
         run: |
           mkdir -p templates
-          cp /home/runner/work/*/main/templates/product.json templates/product.json
+          cp main-source/templates/product.json templates/product.json
 
-      - name: Commit & Push to child branch
+      - name: Commit & Push
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
+          
           git add templates/product.json
-          git commit -m "Sync product.json from main [${{ matrix.child.name }}]" || echo "No changes to commit"
-          git push origin ${{ matrix.child.branch }}
+          
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Sync product.json from main [${{ matrix.child.name }}]"
+            git push origin ${{ matrix.child.branch }}
+          fi
