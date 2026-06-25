@@ -1,0 +1,42 @@
+name: Sync Product Template Only
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'templates/product.json'     # Chỉ trigger khi file product.json thay đổi
+
+jobs:
+  sync-product-json:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        child: 
+          - { branch: 'store-1', name: 'Brand Dev' }
+          - { branch: 'store-2', name: 'Brand Handle' }
+          # Thêm đầy đủ 10 store của bạn vào đây
+
+    steps:
+      - name: Checkout main branch (source)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Checkout child branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.child.branch }}
+
+      - name: Copy ONLY product.json
+        run: |
+          mkdir -p templates
+          cp /home/runner/work/*/main/templates/product.json templates/product.json
+
+      - name: Commit & Push to child branch
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add templates/product.json
+          git commit -m "Sync product.json from main [${{ matrix.child.name }}]" || echo "No changes to commit"
+          git push origin ${{ matrix.child.branch }}
