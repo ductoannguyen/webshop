@@ -9,7 +9,9 @@ on:
 jobs:
   sync-product-json:
     runs-on: ubuntu-latest
-    
+    permissions:
+      contents: write   # ← Thêm dòng này
+
     strategy:
       matrix:
         child: 
@@ -17,12 +19,12 @@ jobs:
           - { branch: 'store-2', name: 'Store 2' }
 
     steps:
-      - name: Checkout child branch (làm việc chính)
+      - name: Checkout child branch
         uses: actions/checkout@v4
         with:
           ref: ${{ matrix.child.branch }}
 
-      - name: Checkout main branch (source)
+      - name: Checkout main branch
         uses: actions/checkout@v4
         with:
           ref: main
@@ -32,9 +34,9 @@ jobs:
         run: |
           mkdir -p templates
           cp main-source/templates/product.json templates/product.json
-          echo "✅ Copied product.json from main"
+          echo "✅ Copied product.json"
 
-      - name: Commit & Push to child branch
+      - name: Commit & Push
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
