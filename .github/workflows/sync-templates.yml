@@ -17,7 +17,12 @@ jobs:
           - { branch: 'store-2', name: 'Store 2' }
 
     steps:
-      - name: Checkout main branch
+      - name: Checkout child branch (làm việc chính)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.child.branch }}
+
+      - name: Checkout main branch (source)
         uses: actions/checkout@v4
         with:
           ref: main
@@ -26,16 +31,10 @@ jobs:
       - name: Copy product.json
         run: |
           mkdir -p templates
-          
-          # Debug nhanh
-          echo "Tìm file product.json..."
-          ls main-source/templates/product.json || echo "Không tìm thấy!"
-          
-          # Copy file
           cp main-source/templates/product.json templates/product.json
-          echo "✅ Đã copy product.json"
+          echo "✅ Copied product.json from main"
 
-      - name: Checkout & Push to child branch
+      - name: Commit & Push to child branch
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
