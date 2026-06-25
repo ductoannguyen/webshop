@@ -10,42 +10,52 @@ jobs:
   sync-product-json:
     runs-on: ubuntu-latest
     permissions:
-      contents: write   # ← Thêm dòng này
+      contents: write
 
     strategy:
       matrix:
-        child: 
+        child:
           - { branch: 'store-1', name: 'Store 1' }
           - { branch: 'store-2', name: 'Store 2' }
+          # Thêm các store khác ở đây
 
     steps:
       - name: Checkout child branch
         uses: actions/checkout@v4
         with:
           ref: ${{ matrix.child.branch }}
+          fetch-depth: 0
 
-      - name: Checkout main branch
+      - name: Checkout main branch (source)
         uses: actions/checkout@v4
         with:
           ref: main
           path: main-source
 
-      - name: Copy product.json
+      - name: Copy all product*.json files (create new if not exist)
         run: |
           mkdir -p templates
-          cp main-source/templates/product.json templates/product.json
-          echo "✅ Copied product.json"
+          
+          # Copy tất cả file product*.json và ghi đè / tạo mới
+          shopt -s nullglob
+          for file in main-source/templates/product*.json; do
+            filename=$(basename "$file")
+            cp -f "$file" "templates/$filename"
+            echo "✅ Copied/Created: $filename"
+          done
 
       - name: Commit & Push
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
           
-          git add templates/product.json
+          # Add tất cả file product*.json (bao gồm file mới)
+          git add templates/product*.json
           
           if git diff --cached --quiet; then
-            echo "No changes to commit"
+            echo "No changes to commit for ${{ matrix.child.name }}"
           else
-            git commit -m "Sync product.json from main [${{ matrix.child.name }}]"
+            git commit -m "Sync product*.json from main [${{ matrix.child.name }}]"
             git push origin ${{ matrix.child.branch }}
+            echo "✅ Successfully synced to ${{ matrix.child.name }}"
           fi
