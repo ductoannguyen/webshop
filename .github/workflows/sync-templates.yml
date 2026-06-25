@@ -1,4 +1,4 @@
-name: Sync Product Template Only
+name: Sync Product Template Only - Debug
 
 on:
   push:
@@ -17,32 +17,38 @@ jobs:
           - { branch: 'store-2', name: 'Store 2' }
 
     steps:
-      - name: Checkout main branch (source)
+      - name: Checkout main branch
         uses: actions/checkout@v4
         with:
           ref: main
           path: main-source
 
-      - name: Debug - Check if product.json exists
+      - name: 🔍 FULL DEBUG - List all files
         run: |
-          echo "=== Checking files in main branch ==="
+          echo "=== Current directory ==="
+          pwd
+          echo "=== Files in main-source ==="
           ls -la main-source/
-          ls -la main-source/templates/ || echo "Folder templates/ not found!"
-          ls -la main-source/templates/product.json || echo "File product.json NOT FOUND!"
+          echo "=== Templates folder ==="
+          ls -la main-source/templates/ || echo "No templates folder!"
+          echo "=== Check product.json specifically ==="
+          ls -la main-source/templates/product.json || echo "product.json NOT FOUND"
+          echo "=== Search for any .json files ==="
+          find main-source -name "*.json" | head -10
 
       - name: Checkout child branch
         uses: actions/checkout@v4
         with:
           ref: ${{ matrix.child.branch }}
 
-      - name: Copy product.json if exists
+      - name: Copy product.json
         run: |
           mkdir -p templates
           if [ -f main-source/templates/product.json ]; then
             cp main-source/templates/product.json templates/product.json
-            echo "✅ Copied product.json successfully"
+            echo "✅ Successfully copied product.json"
           else
-            echo "❌ File product.json not found in main branch!"
+            echo "❌ Still cannot find product.json"
             exit 1
           fi
 
@@ -54,7 +60,7 @@ jobs:
           git add templates/product.json
           
           if git diff --cached --quiet; then
-            echo "No changes to commit"
+            echo "No changes"
           else
             git commit -m "Sync product.json from main [${{ matrix.child.name }}]"
             git push origin ${{ matrix.child.branch }}
