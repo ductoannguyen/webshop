@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main ]
     paths:
-      - 'templates/product.json'
+      - 'templates/product*.json'
 
 jobs:
   sync-product-json:
