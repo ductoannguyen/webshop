@@ -15,7 +15,6 @@ jobs:
         child: 
           - { branch: 'store-1', name: 'Store 1' }
           - { branch: 'store-2', name: 'Store 2' }
-          # Thêm các branch khác nếu có
 
     steps:
       - name: Checkout main branch (source)
@@ -24,15 +23,28 @@ jobs:
           ref: main
           path: main-source
 
+      - name: Debug - Check if product.json exists
+        run: |
+          echo "=== Checking files in main branch ==="
+          ls -la main-source/
+          ls -la main-source/templates/ || echo "Folder templates/ not found!"
+          ls -la main-source/templates/product.json || echo "File product.json NOT FOUND!"
+
       - name: Checkout child branch
         uses: actions/checkout@v4
         with:
           ref: ${{ matrix.child.branch }}
 
-      - name: Copy ONLY product.json
+      - name: Copy product.json if exists
         run: |
           mkdir -p templates
-          cp main-source/templates/product.json templates/product.json
+          if [ -f main-source/templates/product.json ]; then
+            cp main-source/templates/product.json templates/product.json
+            echo "✅ Copied product.json successfully"
+          else
+            echo "❌ File product.json not found in main branch!"
+            exit 1
+          fi
 
       - name: Commit & Push
         run: |
