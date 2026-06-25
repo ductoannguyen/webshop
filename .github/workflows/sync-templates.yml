@@ -1,4 +1,4 @@
-name: Sync Product Template Only - Debug
+name: Sync Product Template Only
 
 on:
   push:
@@ -23,36 +23,19 @@ jobs:
           ref: main
           path: main-source
 
-      - name: 🔍 FULL DEBUG - List all files
-        run: |
-          echo "=== Current directory ==="
-          pwd
-          echo "=== Files in main-source ==="
-          ls -la main-source/
-          echo "=== Templates folder ==="
-          ls -la main-source/templates/ || echo "No templates folder!"
-          echo "=== Check product.json specifically ==="
-          ls -la main-source/templates/product.json || echo "product.json NOT FOUND"
-          echo "=== Search for any .json files ==="
-          find main-source -name "*.json" | head -10
-
-      - name: Checkout child branch
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ matrix.child.branch }}
-
       - name: Copy product.json
         run: |
           mkdir -p templates
-          if [ -f main-source/templates/product.json ]; then
-            cp main-source/templates/product.json templates/product.json
-            echo "✅ Successfully copied product.json"
-          else
-            echo "❌ Still cannot find product.json"
-            exit 1
-          fi
+          
+          # Debug nhanh
+          echo "Tìm file product.json..."
+          ls main-source/templates/product.json || echo "Không tìm thấy!"
+          
+          # Copy file
+          cp main-source/templates/product.json templates/product.json
+          echo "✅ Đã copy product.json"
 
-      - name: Commit & Push
+      - name: Checkout & Push to child branch
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
@@ -60,7 +43,7 @@ jobs:
           git add templates/product.json
           
           if git diff --cached --quiet; then
-            echo "No changes"
+            echo "No changes to commit"
           else
             git commit -m "Sync product.json from main [${{ matrix.child.name }}]"
             git push origin ${{ matrix.child.branch }}
